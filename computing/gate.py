@@ -3,91 +3,107 @@
     All gates implemented using NAND gates.
 """
 
-# usage: _NAND[a][b]
-_NAND = [[1, 1], [1, 0]]
+_NAND_PRIMITIVE = [[1, 1], [1, 0]]
 
 
-def Nand(a, b):
+def nand_gate(a, b):
     """ a primitive gate, used to build all other gates"""
 
-    return _NAND[a][b]
+    return _NAND_PRIMITIVE[a][b]
 
 
-def Not(a):
-    return Nand(a, a)
+def not_gate(a):
+    return nand_gate(a, a)
 
 
-def And(a, b):
-    return Not(Nand(a, b))
+def and_gate(a, b):
+    return not_gate(nand_gate(a, b))
 
 
-def Or(a, b):
-    return Nand(Not(a), Not(b))
+def or_gate(a, b):
+    return nand_gate(not_gate(a), not_gate(b))
 
 
-def Xor(a, b):
-    # todo: this seems like it can be simplified
-    return And(Or(a, b), Nand(a, b))
+def xor_gate(a, b):
+    return and_gate(or_gate(a, b), nand_gate(a, b))
 
 
-def Mux(a, b, sel):
-    ''' if sel=0, return a. if sel=1, return b'''
+def mux_gate(a, b, sel):
+    """ if sel=0, return a. if sel=1, return b"""
 
     # (!sel and a) or (sel and b)
-    return Or(And(Not(sel), a), And(sel, b))
+    return or_gate(and_gate(not_gate(sel), a), and_gate(sel, b))
 
 
-def Dmux(input, sel):
+def dmux_gate(input, sel):
     """ if sel=0, return (input, 0). if sel=1, return (0, input)"""
-    return (And(Not(sel), input), And(sel, input))
+    return (and_gate(not_gate(sel), input), and_gate(sel, input))
 
-def Not16(arr):
+
+def dmux4way_gate(input, sel2):
+    sel_a = and_gate(not_gate(sel2[0]), not_gate(sel2[1]))
+    sel_b = and_gate(not_gate(sel2[0]), sel2[1])
+    sel_c = and_gate(sel2[0], not_gate(sel2[1]))
+    sel_d = and_gate(sel2[0], sel2[1])
+
+    return (
+        and_gate(sel_a, input),
+        and_gate(sel_b, input),
+        and_gate(sel_c, input),
+        and_gate(sel_d, input)
+    )
+
+
+def not16_gate(arr):
     """ apply Not to each bit in array """
 
-    return [Not(arr[i]) for i in range(16)]
+    return [not_gate(arr[i]) for i in range(16)]
 
 
-def And16(arrA, arrB):
-    """ AND each bit of arrA with each bit of arrB"""
-    return [And(arrA[i], arrB[i]) for i in range(16)]
+def and16_gate(a, b):
+    """ AND each bit of 16 bit array a with each bit of array b"""
+    return [and_gate(a[i], b[i]) for i in range(16)]
 
 
-def Or16(arrA, arrB):
-    """ OR each bit of arrA with each bit of arrB"""
-    return [Or(arrA[i], arrB[i]) for i in range(16)]
+def or16_gate(a, b):
+    """ OR each bit of 16 bit array a with each bit of array b"""
+    return [or_gate(a[i], b[i]) for i in range(16)]
 
 
-def Mux16(arrA, arrB, sel):
-    """ MUX each bit of arrA and arrB using sel """
-    return [Mux(arrA[i], arrB[i], sel) for i in range(16)]
+def mux16_gate(a, b, sel):
+    """ MUX each bit of 16 bit array a and array b using sel """
+    return [mux_gate(a[i], b[i], sel) for i in range(16)]
 
-def Or8Way(arr):
+
+def or8way_gate(arr):
     """ OR every bit of array. return 1 if any bit is 1 """
-    return Or(
-        Or(
-            Or(arr[0], arr[1]),
-            Or(arr[2], arr[3])
+    return or_gate(
+        or_gate(
+            or_gate(arr[0], arr[1]),
+            or_gate(arr[2], arr[3])
         ),
-        Or(
-            Or(arr[4], arr[5]),
-            Or(arr[6], arr[7])
+        or_gate(
+            or_gate(arr[4], arr[5]),
+            or_gate(arr[6], arr[7])
         )
     )
 
-def And8Way(arr):
+
+def and8way_gate(arr):
     """ AND every bit of array. return 1 if all bits are 1 """
-    return And(
-        And(
-            And(arr[0], arr[1]),
-            And(arr[2], arr[3])
+    return and_gate(
+        and_gate(
+            and_gate(arr[0], arr[1]),
+            and_gate(arr[2], arr[3])
         ),
-        And(
-            And(arr[4], arr[5]),
-            And(arr[6], arr[7])
+        and_gate(
+            and_gate(arr[4], arr[5]),
+            and_gate(arr[6], arr[7])
         )
     )
 
-def Mux4Way(input4, sel2):
+
+def mux4way_gate(input4, sel2):
     """
     MUX with 4 inputs, 2-bit selector.
 
@@ -98,11 +114,12 @@ def Mux4Way(input4, sel2):
     1   |   0   | c
     1   |   1   | d
     """
-    top = Mux(input4[0], input4[1], sel2[0])
-    bottom = Mux(input4[2], input4[3], sel2[0])
-    return Mux(top , bottom, sel2[1])
+    top = mux_gate(input4[0], input4[1], sel2[0])
+    bottom = mux_gate(input4[2], input4[3], sel2[0])
+    return mux_gate(top, bottom, sel2[1])
 
-def Mux8Way(input8, sel3):
+
+def mux8way_gate(input8, sel3):
     """
     MUX with 8 inputs, 3-bit selector
 
@@ -117,8 +134,8 @@ def Mux8Way(input8, sel3):
     1   |   1   |   0   | g
     1   |   1   |   1   | h
     """
-    top = Mux4Way(input8[0:4], sel3[0:2])
-    bottom = Mux4Way(input8[4:], sel3[0:2])
-    return Mux(top, bottom, sel3[2])
+    top = mux4way_gate(input8[0:4], sel3[0:2])
+    bottom = mux4way_gate(input8[4:], sel3[0:2])
+    return mux_gate(top, bottom, sel3[2])
 
 
