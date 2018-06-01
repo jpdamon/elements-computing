@@ -1,4 +1,4 @@
-"""Arithmetic Logical Unit
+"""Arithmetic Logic Unit
 
 Modules for performing simple 2s-complement arithmetic, using
 logic gates from gates.py
