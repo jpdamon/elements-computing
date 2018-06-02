@@ -1,5 +1,5 @@
 import unittest
-from computing.alu import half_adder, full_adder, adder
+from computing.alu import *
 
 
 class TestAlu(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestAlu(unittest.TestCase):
         self.assertEqual((1, 0), full_adder(1, 1, 0))
         self.assertEqual((1, 1), full_adder(1, 1, 1))
 
-    def test_adder(self):
+    def test_add(self):
         # test with a 4-bit adder for simplicity
         for a in range(0, 16):
             for b in range(0, 16):
@@ -28,20 +28,139 @@ class TestAlu(unittest.TestCase):
                 register_b = _int_as_register(b, 4)
                 expected_output = _int_as_register(a + b, 4)
                 actual_output = [None]*4
-                adder(register_a, register_b, actual_output, 4)
+                add(register_a, register_b, actual_output, 4)
                 self.assertEqual(
                     expected_output,
                     actual_output,
                     f"{a} plus {b}"
                 )
 
-        register_a = _int_as_register(9, 4)
-        self.assertEqual([1, 0, 0, 1], register_a)
+    def test_inc16(self):
+        for a in range(2**(16-1)):
+            register_a = _int_as_register(a, 16)
+            expected_output = _int_as_register(a + 1, 16)
+            actual_output = [None]*16
+            inc16(register_a, actual_output)
+            self.assertEqual(expected_output, actual_output, f"{a} plus 1")
 
+    def test_alu_zero(self):
+        x = _int_as_register(1234, 16)
+        y = _int_as_register(567, 16)
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_ZERO[ZX_BIT],
+            ALU_ZERO[NX_BIT],
+            ALU_ZERO[ZY_BIT],
+            ALU_ZERO[NY_BIT],
+            ALU_ZERO[F_BIT],
+            ALU_ZERO[NO_BIT],
+            output)
+        self.assertEqual([0]*16, output)
+
+    def test_alu_one(self):
+        x = _int_as_register(1234, 16)
+        y = _int_as_register(567, 16)
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_ONE[ZX_BIT],
+            ALU_ONE[NX_BIT],
+            ALU_ONE[ZY_BIT],
+            ALU_ONE[NY_BIT],
+            ALU_ONE[F_BIT],
+            ALU_ONE[NO_BIT],
+            output)
+        self.assertEqual(_int_as_register(1, 16), output)
+
+    def test_alu_negative_one(self):
+        x = _int_as_register(1234, 16)
+        y = _int_as_register(567, 16)
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_NEGATIVE_ONE[ZX_BIT],
+            ALU_NEGATIVE_ONE[NX_BIT],
+            ALU_NEGATIVE_ONE[ZY_BIT],
+            ALU_NEGATIVE_ONE[NY_BIT],
+            ALU_NEGATIVE_ONE[F_BIT],
+            ALU_NEGATIVE_ONE[NO_BIT],
+            output)
+        self.assertEqual([1]*16, output)
+
+    def test_alu_x(self):
+        x = _int_as_register(1234, 16)
+        y = _int_as_register(567, 16)
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_X[ZX_BIT],
+            ALU_X[NX_BIT],
+            ALU_X[ZY_BIT],
+            ALU_X[NY_BIT],
+            ALU_X[F_BIT],
+            ALU_X[NO_BIT],
+            output)
+        self.assertEqual(x, output)
+
+    def test_alu_y(self):
+        x = _int_as_register(1234, 16)
+        y = _int_as_register(567, 16)
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_Y[ZX_BIT],
+            ALU_Y[NX_BIT],
+            ALU_Y[ZY_BIT],
+            ALU_Y[NY_BIT],
+            ALU_Y[F_BIT],
+            ALU_Y[NO_BIT],
+            output)
+        self.assertEqual(y, output)
+
+    def test_alu_not_x(self):
+        x = [0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0]
+        y = _int_as_register(567, 16)
+        not_x = [1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1]
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_NOT_X[ZX_BIT],
+            ALU_NOT_X[NX_BIT],
+            ALU_NOT_X[ZY_BIT],
+            ALU_NOT_X[NY_BIT],
+            ALU_NOT_X[F_BIT],
+            ALU_NOT_X[NO_BIT],
+            output)
+        self.assertEqual(not_x, output)
+
+    def test_alu_not_y(self):
+        x = _int_as_register(1234, 16)
+        y = [0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0]
+        not_y = [1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1]
+        output = [None]*16
+        alu16(
+            x,
+            y,
+            ALU_NOT_Y[ZX_BIT],
+            ALU_NOT_Y[NX_BIT],
+            ALU_NOT_Y[ZY_BIT],
+            ALU_NOT_Y[NY_BIT],
+            ALU_NOT_Y[F_BIT],
+            ALU_NOT_Y[NO_BIT],
+            output)
+        self.assertEqual(not_y, output)
 
 def _int_as_register(integer, n):
-    """ Convert an integer to a register of n-bits.
-    _int_as_register(9, 4) returns [1,0,0,1]"""
+    """ Convert a (nonnegative) integer to a register of n-bits.
+    _int_as_register(9, 4) returns [1,0,0,1]
+    """
 
     register = [1 if digit == '1' else 0 for digit in bin(integer)[2:]]
 

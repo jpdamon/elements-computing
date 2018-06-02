@@ -1,5 +1,7 @@
 import unittest
 from itertools import product
+
+from computing.alu import preset_register16
 from computing.gate import *
 
 
@@ -96,8 +98,12 @@ class TestGates(unittest.TestCase):
     def test_mux16(self):
         a = [0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1]
         b = [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1]
-        self.assertEqual(a, mux16_gate(a, b, 0))
-        self.assertEqual(b, mux16_gate(a, b, 1))
+        output= [None]*16
+        mux16_gate(a, b, output, 0)
+        self.assertEqual(a, output)
+        output = [None]*16
+        mux16_gate(a, b, output, 1)
+        self.assertEqual(b, output)
 
     def test_or8way(self):
         cases = product([0, 1], repeat=8)
@@ -147,3 +153,23 @@ class TestGates(unittest.TestCase):
             self.assertEqual(inputs[5], mux8way_gate(inputs, [1, 0, 1]))
             self.assertEqual(inputs[6], mux8way_gate(inputs, [0, 1, 1]))
             self.assertEqual(inputs[7], mux8way_gate(inputs, [1, 1, 1]))
+
+    def test_preset_register16(self):
+        register_a = [0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1]
+        negate_a = [1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0]
+        output = [None]*16
+        preset_register16(register_a, output, 0, 0)
+        self.assertEqual(register_a, output, "Do not zero, do not negate")
+
+        output = [None] * 16
+        preset_register16(register_a, output, 1, 0)
+        self.assertEqual([0]*16, output, "Zero, do not negate")
+
+        output = [None] * 16
+        preset_register16(register_a, output, 0, 1)
+        self.assertEqual(negate_a, output, "Do not zero, negate")
+
+        output = [None] * 16
+        preset_register16(register_a, output, 1, 1)
+        self.assertEqual([1]*16, output, "Zero, and negate")
+

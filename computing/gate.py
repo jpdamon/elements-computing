@@ -70,9 +70,10 @@ def or16_gate(a, b):
     return [or_gate(a[i], b[i]) for i in range(16)]
 
 
-def mux16_gate(a, b, sel):
+def mux16_gate(a, b, out, sel):
     """ MUX each bit of 16 bit array a and array b using sel """
-    return [mux_gate(a[i], b[i], sel) for i in range(16)]
+    for i in range(16):
+        out[i] = mux_gate(a[i], b[i], sel)
 
 
 def or8way_gate(arr):
