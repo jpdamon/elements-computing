@@ -37,7 +37,7 @@ class TestAlu(unittest.TestCase):
                 )
 
     def test_inc16(self):
-        for a in range(2**(16-1)):
+        for a in range(100):
             register_a = int_as_register(a, 16)
             expected_output = int_as_register(a + 1, 16)
             actual_output = [None]*16
