@@ -3,9 +3,31 @@
 // fill screen with black if key is pressed,
 // otherwise fill with white.
 
-@fillcolor
-M=-1 // fill with black for now
-// TODO: choose fill color based on keyboard input
+
+(GETFILLCOLOR)
+    @KBD
+    D=M
+
+    // if KBD=0, fillcolor=0(white), else fillcolor=-1(black)
+    @FILLWHITE
+    D;JEQ
+
+    @FILLBLACK
+    0;JMP
+
+(FILLBLACK)
+    @fillcolor
+    M=-1
+
+    @FILL
+    0;JMP
+
+(FILLWHITE)
+    @fillcolor
+    M=0
+
+    @FILL
+    0;JMP
 
 (FILL)
     // fill each row based on @fillcolor
@@ -38,11 +60,10 @@ M=-1 // fill with black for now
     M=M+1
     D=M
 
-    // TODO: exit case
     @maxrowaddress  // check if we filled all rows
     D=D-M
 
-    @END
+    @GETFILLCOLOR    // re-sample keyboard input if done
     D;JGT
 
     @FILLROW
