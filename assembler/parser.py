@@ -71,11 +71,10 @@ C_COMMAND_JUMP = {
 }
 
 class Parser:
-    def __init__(self, asmfilename):
+    def __init__(self, asm_string):
         self._cursor = 0
         self._current_command = None
-        with open(asmfilename, "r") as f:
-            self._rawlines = f.readlines()
+        self._rawlines = asm_string.splitlines()
 
         # list of (command, linenumber) once comments/blanklines removed.
         self._commands = []
@@ -94,19 +93,102 @@ class Parser:
                 self._commands.append( (command, i ) )
 
     def has_more(self):
-        return self.cursor < len(self._commands)
+        return self._cursor < len(self._commands)
 
     def advance(self):
         self._current_command = self._commands[self._cursor]
         self._cursor += 1
 
+    def get_symbol(self):
+        command = self._current_command[0]
+        if _isACommand(command):
+            # strip leading @ from A-command
+            return command[1:]
+        elif _isLCommand(command):
+            # strip leading/trailing parens from L-command
+            return command[1:-1]
+        else:
+            raise Exception(
+                "get_symbol() may only be called when command_type() is A_COMMAND or L_COMMAND"
+            )
+
+    def get_dest(self):
+        """get the dest mnemonic in the current C-command.
+        :returns dest mnemonic ("M", "D", "A", etc) or "null" if no destination present
+        :raises Exception if current command is not a C-command
+        """
+
+        command = self._current_command[0]
+        match = _c_command_regex.fullmatch(command)
+        if match is None:
+            raise Exception(
+                "get_dest() may only be called when command_type() is C_COMMAND"
+            )
+
+        dest = match.group("dest")
+        if dest is None:
+            dest = "null"
+
+        if dest in C_COMMAND_DEST:
+            return dest
+        else:
+            line = self._current_command[1]
+            raise Exception(
+                f"Unrecognized destination on line {line}: {dest}"
+            )
+
+    def get_comp(self):
+        """Get the comp mnemonic in the current C-Command.
+        :raises Exception if current command is not a C-Command
+        """
+        command = self._current_command[0]
+        match = _c_command_regex.fullmatch(command)
+        if match is None:
+            raise Exception(
+                "get_comp() may only be called when command_type() is C_COMMAND"
+            )
+
+        comp = match.group("comp")
+        if comp in C_COMMAND_COMP:
+            return comp
+        else:
+            line = self._current_command[1]
+            raise Exception(
+                f"Unrecognized computation on line {line}: {comp}"
+            )
+
+    def get_jump(self):
+        """get the jump mnemonic in the current C-command.
+        :returns jump mnemonic ("JMP", "JEQ", "JLT", etc) or "null" if no jump
+        :raises Exception if current command is not a C-command
+        """
+
+        command = self._current_command[0]
+        match = _c_command_regex.fullmatch(command)
+        if match is None:
+            raise Exception(
+                "get_jump() may only be called when command_type() is C_COMMAND"
+            )
+
+        jump = match.group("jump")
+        if jump is None:
+            jump = "null"
+
+        if jump in C_COMMAND_JUMP:
+            return jump
+        else:
+            line = self._current_command[1]
+            raise Exception(
+                f"Unrecognized jump mnemonic on line {line}: {jump}"
+            )
+
     def command_type(self):
         command = self._current_command[0]
-        if _isACommand(self._current_command):
+        if _isACommand(command):
             return Command.A_COMMAND
-        elif True:
+        elif _isCCommand(command):
             return Command.C_COMMAND
-        elif True:
+        elif _isLCommand(command):
             return Command.L_COMMAND
         else:
             line = self._current_command[1]
@@ -119,19 +201,21 @@ class Parser:
         self.cursor = 0
 
 # A-command @CONSTANT, where constant must be nonnegative decimal integer
-_constant_pattern = r"@\d+"
+_constant_pattern = r"\d+"
 
 # User-defined @SYMBOL where symbol can be letters, digits, underscore, dot,
 # dollar sign, colon and may not begin with a digit.
-_symbol_pattern = r"@[A-z_\.\$:][A-z0-9_\.\$:]*"
+_symbol_pattern = r"[A-z_\.\$:][A-z0-9_\.\$:]*"
 
 # A Command is "@CONSTANT" or "@SYMBOL"
-_a_command_regex= re.compile(f"({_constant_pattern})|({_symbol_pattern})")
+_a_command_regex= re.compile(f"(@{_constant_pattern})|(@{_symbol_pattern})")
 
 _whitespace_regex = re.compile(r"\s+", flags=re.UNICODE)
 
 _c_command_regex = re.compile(r"(?P<dest>(null|[AMD]{1,3})=)?(?P<comp>[AMD01\-+!&|]{1,3})(?P<jump>;(null|[JGTEQLNMP]{3}))?")
 
+# L Command is "(SYMBOL)"
+_l_command_regex = re.compile(f"\\({_symbol_pattern}\\)")
 
 def _isACommand(s):
     return _a_command_regex.fullmatch(s) is not None
@@ -140,6 +224,8 @@ def _isACommand(s):
 def _isCCommand(s):
     return _c_command_regex.fullmatch(s) is not None
 
+def _isLCommand(s):
+    return _l_command_regex.fullmatch(s) is not None
 
 def _nospace(s):
     """strip ALL whitespace from string"""
