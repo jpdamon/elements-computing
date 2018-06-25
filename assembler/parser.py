@@ -11,6 +11,7 @@ class Command(enum.Enum):
     C_COMMAND = 2
     L_COMMAND = 3
 
+
 # C Command compute mnemoics mapped to a-c bits
 C_COMMAND_COMP = {
     #        a  c1 c2 c3 c4 c5 c6
@@ -70,6 +71,7 @@ C_COMMAND_JUMP = {
     "JMP":  [1, 1, 1]
 }
 
+
 class Parser:
     def __init__(self, asm_string):
         self._cursor = 0
@@ -81,16 +83,17 @@ class Parser:
         self._get_commands()
 
     def _get_commands(self):
-        """remove spaces & empty lines.
+        """remove spaces, empty lines, and comments, leaving only commands.
         retains actual line numbers for error reporting.
         """
 
         for i, line in enumerate(self._rawlines):
             command = line.strip()
             if command == "" or command.startswith("//"):
+                # TODO: add support for inline comments, e.g. "D=M +1 // inline comment"
                 pass
             else:
-                self._commands.append( (command, i ) )
+                self._commands.append((command, i))
 
     def has_more(self):
         return self._cursor < len(self._commands)
@@ -98,6 +101,18 @@ class Parser:
     def advance(self):
         self._current_command = self._commands[self._cursor]
         self._cursor += 1
+
+    def command_type(self):
+        command = self._current_command[0]
+        if _isACommand(command):
+            return Command.A_COMMAND
+        elif _isCCommand(command):
+            return Command.C_COMMAND
+        elif _isLCommand(command):
+            return Command.L_COMMAND
+        else:
+            line = self._current_command[1]
+            raise SyntaxError(f"Unrecognized command on line {line}: {command}")
 
     def get_symbol(self):
         command = self._current_command[0]
@@ -128,6 +143,9 @@ class Parser:
         dest = match.group("dest")
         if dest is None:
             dest = "null"
+        else:
+            # strip trailing '=' from dest mnemonic
+            dest = dest[:-1]
 
         if dest in C_COMMAND_DEST:
             return dest
@@ -173,6 +191,9 @@ class Parser:
         jump = match.group("jump")
         if jump is None:
             jump = "null"
+        else:
+            # remove leading ';' from jump command
+            jump = jump[1:]
 
         if jump in C_COMMAND_JUMP:
             return jump
@@ -182,23 +203,9 @@ class Parser:
                 f"Unrecognized jump mnemonic on line {line}: {jump}"
             )
 
-    def command_type(self):
-        command = self._current_command[0]
-        if _isACommand(command):
-            return Command.A_COMMAND
-        elif _isCCommand(command):
-            return Command.C_COMMAND
-        elif _isLCommand(command):
-            return Command.L_COMMAND
-        else:
-            line = self._current_command[1]
-            raise SyntaxError(f"Unrecognized command on line {line}: {command}")
-
-
-
-
     def reset(self):
-        self.cursor = 0
+        self._cursor = 0
+
 
 # A-command @CONSTANT, where constant must be nonnegative decimal integer
 _constant_pattern = r"\d+"
@@ -217,6 +224,7 @@ _c_command_regex = re.compile(r"(?P<dest>(null|[AMD]{1,3})=)?(?P<comp>[AMD01\-+!
 # L Command is "(SYMBOL)"
 _l_command_regex = re.compile(f"\\({_symbol_pattern}\\)")
 
+
 def _isACommand(s):
     return _a_command_regex.fullmatch(s) is not None
 
@@ -224,9 +232,7 @@ def _isACommand(s):
 def _isCCommand(s):
     return _c_command_regex.fullmatch(s) is not None
 
+
 def _isLCommand(s):
     return _l_command_regex.fullmatch(s) is not None
 
-def _nospace(s):
-    """strip ALL whitespace from string"""
-    return _whitespace_regex.sub("", s)

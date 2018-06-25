@@ -58,6 +58,7 @@ class TestParser(unittest.TestCase):
             @SCREEN
             M=1
             
+            // another comment
             @KBD
             D=M
             
@@ -90,3 +91,111 @@ class TestParser(unittest.TestCase):
             self.assertEqual(command_type, p.command_type())
 
         self.assertFalse(p.has_more())
+
+    def test_get_symbol(self):
+        asm = """@i
+        D=0
+        
+        @my_var1:1
+        M=D
+        
+        (the_end)
+            0;JMP
+        """
+
+        p = Parser(asm)
+        p.advance()
+        self.assertEqual("i", p.get_symbol())
+        p.advance()
+        with self.assertRaises(Exception):
+            # Exception when get_symbol() called on C-Command D=0
+            p.get_symbol()
+        p.advance()
+        self.assertEqual("my_var1:1", p.get_symbol())
+        p.advance()
+        with self.assertRaises(Exception):
+            # Exception when get_symbol() called on C-Command M=D
+            p.get_symbol()
+        p.advance()
+        self.assertEqual("the_end", p.get_symbol())
+        p.advance()
+        with self.assertRaises(Exception):
+            # Exception when get_symbol() called on C-Command 0;JMP
+            p.get_symbol()
+
+    def test_get_comp(self):
+        asm = """@i
+        D=0
+        
+        @my_var1:1
+        M=D+1
+        A=D&M
+        D=D+A;JLE
+        
+        (the_end)
+            0;JMP
+        """
+
+        p = Parser(asm)
+        p.advance()
+        p.advance()
+        self.assertEqual("0", p.get_comp())
+        p.advance()
+        p.advance()
+        self.assertEqual("D+1", p.get_comp())
+        p.advance()
+        self.assertEqual("D&M", p.get_comp())
+        p.advance()
+        self.assertEqual("D+A", p.get_comp())
+        p.advance()
+        p.advance()
+        self.assertEqual("0", p.get_comp())
+
+    def test_get_jump(self):
+        asm = """@function_a
+        D=M;JGE
+        A=1
+        (function_a)
+            D=A+1;JEQ
+            D&M;JLT
+            
+        (END)
+            0;JMP"""
+
+        p = Parser(asm)
+        p.advance()
+        p.advance()
+        self.assertEqual("JGE", p.get_jump())
+        p.advance()
+        self.assertEqual("null", p.get_jump())
+        p.advance()
+        p.advance()
+        self.assertEqual("JEQ", p.get_jump())
+        p.advance()
+        self.assertEqual("JLT", p.get_jump())
+        p.advance()
+        p.advance()
+        self.assertEqual("JMP", p.get_jump())
+
+    def test_get_dest(self):
+        asm = """D+1
+        D=1
+        M=D+A
+        A=1;JLE
+        AM=D
+        AMD=D&M
+        """
+
+        p = Parser(asm)
+        p.advance()
+        self.assertEqual("null", p.get_dest())
+        p.advance()
+        self.assertEqual("D", p.get_dest())
+        p.advance()
+        self.assertEqual("M", p.get_dest())
+        p.advance()
+        self.assertEqual("A", p.get_dest())
+        p.advance()
+        self.assertEqual("AM", p.get_dest())
+        p.advance()
+        self.assertEqual("AMD", p.get_dest())
