@@ -12,7 +12,25 @@ class Command(enum.Enum):
     L_COMMAND = 3
 
 
-# C Command compute mnemoics mapped to a-c bits
+def comp_bits(s):
+    """Get 7 bits for comp part of C-Command s
+        :raises KeyError if s is an invalid comp"""
+    return C_COMMAND_COMP[s]
+
+
+def dest_bits(s):
+    """Get 3 bits for dest part of C-Command s
+        :raises KeyError if s is an invalid dest"""
+    return C_COMMAND_DEST[s]
+
+
+def jump_bits(s):
+    """Get 3 bits for jump part of C-Command s
+        :raises KeyError if s is an invalid jump"""
+    return C_COMMAND_JUMP[s]
+
+
+# C Command compute mnemonics mapped to a-c bits
 C_COMMAND_COMP = {
     #        a  c1 c2 c3 c4 c5 c6
     "0":    [0, 1, 0, 1, 0, 1, 0],
@@ -72,7 +90,7 @@ C_COMMAND_JUMP = {
 }
 
 
-class Parser:
+class AsmParser:
     def __init__(self, asm_string):
         self._cursor = 0
         self._current_command = None
@@ -88,9 +106,17 @@ class Parser:
         """
 
         for i, line in enumerate(self._rawlines):
-            command = line.strip()
-            if command == "" or command.startswith("//"):
-                # TODO: add support for inline comments, e.g. "D=M +1 // inline comment"
+            command = line
+
+            # if comment is found, remove everything from '//' until end of line.
+            comment = command.find("//")
+            if comment != -1:
+                command = command[:comment]
+
+            # removal of whitespace must come after comment removal to support inline comments
+            command = command.strip()
+            if command == "":
+                # Blank line or comment, ignore
                 pass
             else:
                 self._commands.append((command, i))

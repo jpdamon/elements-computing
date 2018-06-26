@@ -1,5 +1,5 @@
 import unittest
-from assembler.parser import _isACommand, _isCCommand, _isLCommand, Parser, Command
+from assembler.parser import _isACommand, _isCCommand, _isLCommand, AsmParser, Command
 
 
 class TestParser(unittest.TestCase):
@@ -62,14 +62,14 @@ class TestParser(unittest.TestCase):
             @KBD
             D=M
             
-            @LOOP
-            D;JLT
+            @LOOP   // an inline comment
+            D;JLT// another inline comment
             
         (END)
             @END
             0;JMP"""
 
-        p = Parser(asm)
+        p = AsmParser(asm)
 
         expected_types = [
             Command.L_COMMAND,  # (LOOP)
@@ -103,7 +103,7 @@ class TestParser(unittest.TestCase):
             0;JMP
         """
 
-        p = Parser(asm)
+        p = AsmParser(asm)
         p.advance()
         self.assertEqual("i", p.get_symbol())
         p.advance()
@@ -136,7 +136,7 @@ class TestParser(unittest.TestCase):
             0;JMP
         """
 
-        p = Parser(asm)
+        p = AsmParser(asm)
         p.advance()
         p.advance()
         self.assertEqual("0", p.get_comp())
@@ -162,7 +162,7 @@ class TestParser(unittest.TestCase):
         (END)
             0;JMP"""
 
-        p = Parser(asm)
+        p = AsmParser(asm)
         p.advance()
         p.advance()
         self.assertEqual("JGE", p.get_jump())
@@ -186,7 +186,7 @@ class TestParser(unittest.TestCase):
         AMD=D&M
         """
 
-        p = Parser(asm)
+        p = AsmParser(asm)
         p.advance()
         self.assertEqual("null", p.get_dest())
         p.advance()
