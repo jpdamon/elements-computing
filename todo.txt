@@ -1,0 +1,31 @@
+## Features
+Add symbol table support
+
+## Improvements/Experiments
+Refactor parser to allow streaming model rather than reading whole file as once?
+
+
+## Completed
+Try speeding up parsing
+ +/- moving from string join to io stream resulted in very small speedup
+ + storing bit patterns as string rather than converting bits to string gave big
+    big speedup (30%+)
+ +/- Replacing command regex has benefit, but makes code more confusing:
+                    Regex   No Regex
+        A-Command   2.03    1.11
+        C-Command   2.38    0.91
+        L-Command   2.00    1.09
+
+        Data taken from 3 iterations of PongL.asm (about 20k lines)
+
+        Verdict: clean up new code and remove regex, regex is not very
+        readable either so not losing much
+
+ + should still save command type once calculated, since it's used in subsequent
+    get_symbol call
+ +/- pre-calculating all C-command bit combinations doesn't seem worth
+    complicating the code, especially as we move toward streams. However it does
+    speed up the _is_c_command() portion of get_command_type()
+
+
+Remove experimental performance code before committing
