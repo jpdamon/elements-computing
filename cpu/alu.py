@@ -3,7 +3,7 @@
 Modules for performing simple 2s-complement arithmetic, using
 logic gates from gates.py
 """
-from computing.gate import *
+from cpu.gate import *
 
 
 def half_adder(a, b):

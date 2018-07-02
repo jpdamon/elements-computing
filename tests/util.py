@@ -1,5 +1,5 @@
-from computing.alu import inc16
-from computing.gate import not16_gate
+from cpu.alu import inc16
+from cpu.gate import not16_gate
 
 
 def int_as_register(integer, n):

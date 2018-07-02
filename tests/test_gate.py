@@ -1,8 +1,8 @@
 import unittest
 from itertools import product
 
-from computing.alu import preset_register16
-from computing.gate import *
+from cpu.alu import preset_register16
+from cpu.gate import *
 
 
 class TestGates(unittest.TestCase):

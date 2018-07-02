@@ -1,5 +1,5 @@
 import unittest
-from computing.alu import *
+from cpu.alu import *
 from tests.util import int_as_register
 
 

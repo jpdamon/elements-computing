@@ -1,6 +1,6 @@
 import unittest
 
-from computing.memory import *
+from cpu.memory import *
 from tests.util import *
 
 

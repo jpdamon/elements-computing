@@ -129,6 +129,9 @@ class AsmParser:
         self._current_command = self._commands[self._cursor]
         self._cursor += 1
 
+    def get_line_number(self):
+        return self._current_command["line"]
+
     def command_type(self):
         # fast return if we already found type of this line
         if "type" in self._current_command:

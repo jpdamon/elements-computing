@@ -1,5 +1,5 @@
 """Memory chips, including registers & RAM"""
-from computing.gate import *
+from cpu.gate import *
 import math
 
 class ChipClock:
