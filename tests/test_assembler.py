@@ -73,3 +73,7 @@ class TestAssembler(unittest.TestCase):
 
         actual = assemble(asm_string)
         self.assertEqual(expected, actual, "Compare assembler output to a verified file")
+
+
+if __name__ == '__main__':
+    unittest.main()

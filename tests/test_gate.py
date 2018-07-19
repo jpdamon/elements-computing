@@ -173,3 +173,6 @@ class TestGates(unittest.TestCase):
         preset_register16(register_a, output, 1, 1)
         self.assertEqual([1]*16, output, "Zero, and negate")
 
+
+if __name__ == '__main__':
+    unittest.main()

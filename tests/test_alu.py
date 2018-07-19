@@ -157,3 +157,7 @@ class TestAlu(unittest.TestCase):
             ALU_NOT_Y[NO_BIT],
             output)
         self.assertEqual(not_y, output)
+
+
+if __name__ == '__main__':
+    unittest.main()

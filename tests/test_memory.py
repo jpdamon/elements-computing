@@ -145,3 +145,7 @@ class TestMemory(unittest.TestCase):
         self.assertEqual(expected[2], ram.get_output_bus())
         ram.set_address_bus([1, 1])
         self.assertEqual(expected[3], ram.get_output_bus())
+
+
+if __name__ == '__main__':
+    unittest.main()

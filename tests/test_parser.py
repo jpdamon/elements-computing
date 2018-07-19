@@ -199,3 +199,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual("AM", p.get_dest())
         p.advance()
         self.assertEqual("AMD", p.get_dest())
+        
+        
+if __name__ == '__main__':
+    unittest.main()
